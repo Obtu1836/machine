@@ -1,13 +1,17 @@
 import numpy as np
-from numpy.linalg import inv
+from numpy.linalg import inv,norm
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpan
 
-
 def lrlw(tx, x, y, k):
 
-    ke = tx-x
-    dia = np.exp(-np.power(ke, 2)/(2*k))
+    l2=np.power(norm(x[:,None]-tx,axis=2),2)
+    '''
+    使用norm 计算 训练集上的每个点到测试的样本(单条)的距离 然后平方 
+
+    类似 聚类 时 的原理
+    '''
+    dia=np.exp(-l2/(2*k**2))
     q = np.diag(dia.ravel())
     w = inv(x.T.dot(q).dot(x)).dot(x.T).dot(q).dot(y)
 
