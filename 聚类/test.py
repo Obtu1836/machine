@@ -4,6 +4,7 @@ from sklearn.datasets import make_blobs
 import matplotlib.pyplot as plt
 import pandas as pd
 from collections import Counter,defaultdict
+from sklearn.metrics import confusion_matrix
 
 np.random.seed(0)
 def plus(data,k):
@@ -77,6 +78,7 @@ def px(arr1,arr2):
 def score(label,tag):
 
     counts=Counter(zip(label,tag))
+    print(counts)
     dic=defaultdict(list)
     
     for var in np.unique(label):
@@ -90,6 +92,7 @@ def score(label,tag):
     
     inps=np.array(inps)
     maps=dict(zip(inps[:,0],inps[:,1]))
+    print(maps)
 
     arr3=np.array(list(map(lambda x:maps[x],label)))
 
@@ -111,13 +114,17 @@ if __name__ == '__main__':
     # plt.show()
 
     
-    sk=pd.DataFrame({'label':label,'tag':tags[:,0].astype(np.int32)})
+    # sk=pd.DataFrame({'label':label,'tag':tags[:,0].astype(np.int32)})
 
-    print(sk.head(10))
+    # print(sk.head(10))
 
-    # px(label,tags[:,0])
+    # # px(label,tags[:,0])
     score(label,tags[:,0])
 
+    con=confusion_matrix(label,tags[:,0])
+    print()
+
+    print(con)
 
 
 
