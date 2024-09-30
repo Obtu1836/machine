@@ -7,8 +7,6 @@ import matplotlib.animation as mpan
 
 def lrlw(tx, x, y, k):
 
-    # ke = tx-x
-    # dia = np.exp(-np.power(ke, 2)/(2*k**2))
     dis=norm(x[:,None]-tx,axis=2)
     dis=np.power(dis,2)
     dia=np.exp(-dis/(2*k**2))
