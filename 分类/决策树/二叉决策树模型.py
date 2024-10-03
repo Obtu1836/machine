@@ -77,7 +77,7 @@ def build(data, mode):
         sign = lab[np.argmax(cuns)]
         return Tree(sign=sign, mode=mode)
     
-def printf(tree,level='o'):
+def printf(tree,level='root-'):
 
     if tree.sign!=None:
         print(level+'-'+str(tree.sign))
@@ -115,7 +115,7 @@ if __name__ == '__main__':
                             [27, 176, 0, 25000],
                             [27, 176, 0, 10000]])
     
-    printf(tree,'O')
+    printf(tree,'root-')
     
     # res=[]
     # for var in test_sample:

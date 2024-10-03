@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.linalg import norm
 from numpy.linalg import inv
 import matplotlib.pyplot as plt
 import matplotlib.animation as mpan
@@ -6,8 +7,11 @@ import matplotlib.animation as mpan
 
 def lrlw(tx, x, y, k):
 
-    ke = tx-x
-    dia = np.exp(-np.power(ke, 2)/(2*k))
+    # ke = tx-x
+    # dia = np.exp(-np.power(ke, 2)/(2*k**2))
+    dis=norm(x[:,None]-tx,axis=2)
+    dis=np.power(dis,2)
+    dia=np.exp(-dis/(2*k**2))
     q = np.diag(dia.ravel())
     w = inv(x.T.dot(q).dot(x)).dot(x.T).dot(q).dot(y)
 
