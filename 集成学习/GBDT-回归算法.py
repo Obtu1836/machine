@@ -1,9 +1,8 @@
 import numpy as np
 from sklearn.datasets import make_regression
-from sklearn.tree import DecisionTreeRegressor
+from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import r2_score
-import pickle
 
 class Tree:
 
@@ -98,30 +97,78 @@ class Regression:
 
         return l_data,r_data
     
+
+class GB_regress:
+
+    def __init__(self,tree_num,lr=0.1):
+
+        self.lr=lr
+        self.tree_num=tree_num
+    
+    def fit(self,xy,max_depth):
+        train_x,train_y=np.split(xy,[-1],axis=1)
+        train_y=train_y.ravel()
+        f=np.zeros_like(train_y,dtype=np.float32)
+        sign=True
+        self.trees=[]
+        for i in range(self.tree_num):
+            neg_grad=train_y-f
+            regre=Regression()
+            xy=np.c_[train_x,neg_grad]
+            tree=regre.fit(xy,max_depth)
+            self.trees.append(tree)
+            pred=[]
+            for var in train_x:
+                pred.append(regre.predict(var,tree))
+            
+            pred=np.array(pred)
+            if sign:
+                sign=False
+                f=pred
+            else:
+                f+=self.lr*pred
+
+    def predict(self,x):
+        res=[]
+        rege=Regression()
+        for var in x:
+            f=0
+            sign=True
+            for tree in self.trees:
+                pred=rege.predict(var,tree)
+
+                if sign:
+                    sign=False
+                    f=pred
+                else:
+                    f+=self.lr*pred
+            res.append(f)
+            
+        return np.array(res)
+    
 if __name__ == '__main__':
     
-    data,label=make_regression(1000,5)
+    data,label=make_regression(500,3)
     x_train,x_test,y_train,y_test=train_test_split(data,label,
                                                    train_size=0.8)
     
+    xy=np.c_[x_train,y_train]
     max_depth=5
-    
-    xy_train=np.c_[x_train,y_train]
-    deci_regress=Regression()
-    tree=deci_regress.fit(xy_train,max_depth)
+
+    my=GB_regress(200,0.1)
+
+    my.fit(xy,max_depth)
+
+    res=my.predict(x_test)
+
+    print(r2_score(y_test,res))
 
 
-
-    # deci_regress.prinf(tree)
-    p=np.apply_along_axis(deci_regress.predict,1,x_test,tree)
-    
-    print(F"自己写的函数结果: {r2_score(y_test,p)}")
-
-    model=DecisionTreeRegressor(max_depth=max_depth)
+    model=GradientBoostingRegressor(n_estimators=200,learning_rate=0.1,
+                                    max_depth=max_depth)
     model.fit(x_train,y_train)
 
-    yp=model.predict(x_test)
-    print(f"sklearn 结果: {r2_score(y_test,yp)}")
+    ypp=model.predict(x_test)
 
+    print(r2_score(y_test,ypp))
 
-    
