@@ -16,7 +16,7 @@ class LogisticRegression:
     
     def loss(self,mask,x,w):
 
-        return (mask*np.log(self.softmax(x,w))).sum()
+        return -(mask*np.log(self.softmax(x,w))).sum()
     
     def grad(self,x,mask,w):
 
@@ -29,8 +29,6 @@ if __name__ == '__main__':
     data,label=com.data,com.target
 
     scale=MinMaxScaler()
-
-    # data=scale.fit_transform(data)
 
     x_train,x_test,y_train,y_test=train_test_split(data,label,
                                                    train_size=0.7,

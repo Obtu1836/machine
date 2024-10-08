@@ -8,12 +8,6 @@ def sigmoid(x):
 
     return 1/(1+np.exp(-x))
 
-def softmax(x):
-
-    f=np.exp(x)
-
-    return np.divide(f,f.sum(axis=1,keepdims=True))
-
 def fit(x,y,max_depth,lr,nums):
 
     f=np.zeros_like(y,np.float32)
@@ -64,6 +58,7 @@ if __name__ == '__main__':
     tree=fit(train_x,train_y,5,0.1,300)
 
     pred=predict(tree,test_x)
+    print(pred)
 
     print(accuracy_score(test_y,pred))
 
