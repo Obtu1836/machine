@@ -1,159 +1,96 @@
 import numpy as np
-from sklearn.datasets import make_regression
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import r2_score
-from sklearn.tree import DecisionTreeRegressor
+from numpy.linalg import norm
+import pandas as pd
+from sklearn.datasets import make_blobs
+import matplotlib.pyplot as plt
 
-class Tree:
+np.random.seed(1)
 
-    def __init__(self,col=-1,val=None,leaf=None,l=None,r=None):
+def plus(data,k=2):
+    cents=[data[np.random.randint(len(data))]]
 
-        self.col=col
-        self.val=val
-        self.leaf=leaf
-        self.l=l
-        self.r=r
+    while len(cents)<k:
+        dis=np.min(norm(data[:,None]-cents,axis=2),axis=1)
+        dis=np.power(dis,2)
+
+        prob=dis/dis.sum()
+        cum=np.cumsum(prob)
+
+        sign=np.random.random()
+        for j,p in enumerate(cum):
+            if p>sign:
+                cents.append(data[j])
+                break
+    return np.array(cents)
 
 
-class Regress:
+def km(data,k=2):
 
-    def __init__(self):
+    m,n=data.shape
+    tags=np.zeros((m,2))
+    cents=plus(data,k)
+
+    flag=True
+    while flag:
+        flag=False
+
+        distance=norm(data[:,None]-cents,axis=2)
+        dis=np.min(distance,axis=1)
+        tag=np.argmin(distance,axis=1)
+
+        if not((tags[:,0]==tag).all()):
+            flag=True
         
-        pass
+        tags[:,0]=tag
+        tags[:,1]=dis
 
-    def fit(self,xy,max_len=None):
+        df=pd.DataFrame(data)
+        cents=df.groupby(tag).apply(lambda x:x.mean(axis=0)).values 
+    
+    return cents,tags
 
-        if len(xy)==0:
-            return Tree()
-        
-        if max_len==0 :
-            leaf=xy[:,-1].mean()
-            return Tree(leaf=leaf)
-        
-        init=self.mse(xy)
-        diff=0
 
-        mid_col=None
-        mid_val=None
-        mid_l=None
-        mid_r=None
+def split(data,k):
 
-        n=xy.shape[1]-1
-        for col in range(n):
-            for val in xy[:,col]:
-                l_data,r_data=self.split(xy,col,val)
-                l_mse=self.mse(l_data)
-                r_mse=self.mse(r_data)
-                ds=init-l_mse-r_mse
+    m,n=data.shape
+    tags=np.zeros((m,2))
 
-                if ds>diff and len(l_data)>0 and len(r_data)>0:
+    cents=[data[np.random.randint(len(data))]]
 
-                    mid_col=col
-                    mid_val=val
-                    mid_l=l_data
-                    mid_r=r_data
-                    diff=ds
-
-        if diff>0:
-            if max_len:
-                l=self.fit(mid_l,max_len-1)
-                r=self.fit(mid_r,max_len-1)
-                
-            else:
-                l=self.fit(mid_l)
-                r=self.fit(mid_r)
-            return Tree(col=mid_col,val=mid_val,l=l,r=r)
+    while len(cents)<k:
+        sse=np.inf
+        for i in range(len(cents)):
+            cur_data=data[tags[:,0]==i]
+            sp_cent,sp_tag=km(cur_data,2)
+            sp_sse=sp_tag[:,1].sum()
+            non_sp_sse=tags[tags[:,0]!=i,1].sum()
+            new_sse=sp_sse+non_sp_sse
             
-        else:
+            if new_sse<sse:
+                sse=new_sse
+                sign=i
+                mid_cent=sp_cent
+                mid_tag=sp_tag
 
-            leaf=xy[:,-1].mean()
+            
 
-            return Tree(leaf=leaf)
-        
+        mid_tag[mid_tag[:,0]==1,0]=len(cents)
+        mid_tag[mid_tag[:,0]==0,0]=sign
+        tags[tags[:,0]==sign,:]=mid_tag
 
-    def printf(self,tree,level='ROOT-'):
+        cents[sign]=mid_cent[0]
+        cents.append(mid_cent[1])
 
-        if tree.leaf!=None:
-
-            print(level+str(tree.leaf))
-        else:
-
-            print(level+str(tree.col)+str(tree.val))
-
-            self.printf(tree.l,level+'l-')
-            self.printf(tree.r,level+'R-')
-
-    def deci_predict(self,x,tree):
-
-        if tree.leaf!=None:
-            return tree.leaf
-        
-        else:
-            if x[tree.col]<tree.val:
-                branch=tree.l
-            else:
-                branch=tree.r
-
-            return self.deci_predict(x,branch)
-
-
-    
-    @staticmethod
-    def mse(xy):
-
-        if len(xy)==0:
-            return 0
-        else:
-            y=xy[:,-1]
-            return np.power(y-y.mean(),2).sum()
-
-    @staticmethod
-    def split(xy,col,val):
-
-        con=xy[:,col]<val
-
-        l_data=xy[con]
-        r_data=xy[~con]
-
-        return l_data,r_data
-    
-
-
+    return np.array(cents),tags
 
 
 if __name__ == '__main__':
     
-    data,label=make_regression(500,5)
+    k=5
+    x,y=make_blobs(300,2,centers=k)
 
-    x_train,x_test,y_train,y_test=train_test_split(data,label,
-                                                   train_size=0.8)
-    
-    regress=Regress()
-
-    xy=np.c_[x_train,y_train]
-    tree=regress.fit(xy,5)
-
-    yp=[]
-    for var in x_test:
-        pred=regress.deci_predict(var,tree)
-
-        yp.append(pred)
-
-
-    print(r2_score(y_test,yp))
-
-
-    model=DecisionTreeRegressor(max_depth=5)
-
-    model.fit(x_train,y_train)
-
-    myp=model.predict(x_test)
-
-    print(r2_score(y_test,myp))
-
-    
-    
-
-    
-
+    plt.scatter(x[:,0],x[:,1],c=y)
+    cents,tags=split(x,k)
+    plt.scatter(cents[:,0],cents[:,1],marker='*',color='r',s=100)
+    plt.show()
 

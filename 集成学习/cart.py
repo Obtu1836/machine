@@ -17,9 +17,10 @@ class Tree:
 
 class Cart:
 
-    def __init__(self,max_depth=None):
+    def __init__(self,max_depth=None,min_samples=5):
 
         self.max_depth=max_depth
+        self.min_samples=min_samples
 
     @staticmethod
     def mse(x,y):
@@ -37,14 +38,15 @@ class Cart:
         return l_x,l_y,r_x,r_y
     
     def fit(self,x_train,y_train):
-        self.tree=self.build(x_train,y_train)
+        self.tree=self.build(x_train,y_train,self.max_depth,self.min_samples)
 
-    def build(self,x,y,max_depth=None):
-
-        if len(x) and len(y)==0:
-            return Tree()
+    def build(self,x,y,max_depth=None,min_samples=None):
         
-        if max_depth==0:
+        if len(np.unique(y))==1:
+
+            return Tree(leaf=y[0])
+        
+        if max_depth==0 or len(x)<=min_samples:
             leaf=y.mean()
             return Tree(leaf=leaf)
         
@@ -80,11 +82,11 @@ class Cart:
         
         if diff>0:
             if max_depth:
-                l=self.build(mid_lx,mid_ly,max_depth-1)
-                r=self.build(mid_rx,mid_ry,max_depth-1)
+                l=self.build(mid_lx,mid_ly,max_depth-1,min_samples)
+                r=self.build(mid_rx,mid_ry,max_depth-1,min_samples)
             else:
-                l=self.build(mid_lx,mid_ly)
-                r=self.build(mid_rx,mid_ry)
+                l=self.build(mid_lx,mid_ly,min_samples)
+                r=self.build(mid_rx,mid_ry,min_samples)
             
             return Tree(col=mid_col,val=mid_val,l=l,r=r)
         
@@ -114,13 +116,15 @@ if __name__ == '__main__':
     data,label=make_regression(500,2)
     x_train,x_test,y_train,y_test=train_test_split(data,label,
                                                    train_size=0.8)
-    max_depth=3
-    model=Cart(max_depth)
+    max_depth=5
+    min_samples=1
+    model=Cart(max_depth,min_samples)
     model.fit(x_train=x_train,y_train=y_train)
 
     yp=model.predict(x_test)
 
     print(r2_score(y_test,yp))
+
 
 
 
