@@ -99,7 +99,8 @@ class Cart:
         
         return yp
 
-    def pred(self,var,tree):
+    @staticmethod
+    def pred(var,tree):
 
         if tree.leaf!=None:
             return tree.leaf
@@ -108,7 +109,7 @@ class Cart:
                 branch=tree.l
             else:
                 branch=tree.r
-            return self.pred(var,branch)
+            return Cart.pred(var,branch)
 
         
 if __name__ == '__main__':

@@ -19,11 +19,8 @@ def lrlw(tx, x, y, k):
 def paint(n):
 
     k = ks[n]
-    prey = []
 
-    for var in testx:
-        prey.append(lrlw(var, x, y, k))
-    yp = np.array(prey).ravel()
+    yp=np.apply_along_axis(lrlw,1,testx,x,y,k)
 
     p.set_data(testx.ravel(), yp)
     st.set_text(f'Gauss_ker={k}')

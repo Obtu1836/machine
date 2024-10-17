@@ -1,96 +1,66 @@
 import numpy as np
-from numpy.linalg import norm
 import pandas as pd
-from sklearn.datasets import make_blobs
-import matplotlib.pyplot as plt
 
-np.random.seed(1)
+class NaiveBayes:
 
-def plus(data,k=2):
-    cents=[data[np.random.randint(len(data))]]
+    def __init__(self,alpha=0):
 
-    while len(cents)<k:
-        dis=np.min(norm(data[:,None]-cents,axis=2),axis=1)
-        dis=np.power(dis,2)
+        self.alpha=alpha
 
-        prob=dis/dis.sum()
-        cum=np.cumsum(prob)
+    @staticmethod
+    def cal_feature(df):
 
-        sign=np.random.random()
-        for j,p in enumerate(cum):
-            if p>sign:
-                cents.append(data[j])
-                break
-    return np.array(cents)
-
-
-def km(data,k=2):
-
-    m,n=data.shape
-    tags=np.zeros((m,2))
-    cents=plus(data,k)
-
-    flag=True
-    while flag:
-        flag=False
-
-        distance=norm(data[:,None]-cents,axis=2)
-        dis=np.min(distance,axis=1)
-        tag=np.argmin(distance,axis=1)
-
-        if not((tags[:,0]==tag).all()):
-            flag=True
-        
-        tags[:,0]=tag
-        tags[:,1]=dis
-
-        df=pd.DataFrame(data)
-        cents=df.groupby(tag).apply(lambda x:x.mean(axis=0)).values 
+        p=df.apply(lambda x:x.value_counts())
+        return p.T
     
-    return cents,tags
+    def fit(self,x,y):
+        n=x.shape[1]
+        col_name=[('x'+str(i+1)) for i in range(n)]
+        k=len(np.unique(y))
+        y=pd.Series(y)
+        self.yps=(y.value_counts()+alpha)/(len(y)+k)
+
+        df=pd.DataFrame(x,columns=col_name)
+        model=df.groupby(y).apply(self.cal_feature)
+        model.fillna(0,inplace=True)
+
+        ser=df.apply(lambda x:len(x.unique()))
+        ser=pd.Series(np.tile(ser,k),index=model.index)
+        prob=(model+self.alpha).div(model.sum(axis=1)+ser*self.alpha,axis=0)
+        self.prob=np.log(prob).groupby(level=0)
+
+    def two(self,df,ser):
+
+        ind=df.name
+        df=df.values
+        ps=df[range(len(df)),ser].sum()+self.yps[ind]
+
+        return ps
 
 
-def split(data,k):
+    def one(self,ser):
 
-    m,n=data.shape
-    tags=np.zeros((m,2))
+        p=self.prob.apply(self.two,ser)
+        
+        return p.idxmax()
 
-    cents=[data[np.random.randint(len(data))]]
+    def predict(self,testx):
 
-    while len(cents)<k:
-        sse=np.inf
-        for i in range(len(cents)):
-            cur_data=data[tags[:,0]==i]
-            sp_cent,sp_tag=km(cur_data,2)
-            sp_sse=sp_tag[:,1].sum()
-            non_sp_sse=tags[tags[:,0]!=i,1].sum()
-            new_sse=sp_sse+non_sp_sse
-            
-            if new_sse<sse:
-                sse=new_sse
-                sign=i
-                mid_cent=sp_cent
-                mid_tag=sp_tag
-
-            
-
-        mid_tag[mid_tag[:,0]==1,0]=len(cents)
-        mid_tag[mid_tag[:,0]==0,0]=sign
-        tags[tags[:,0]==sign,:]=mid_tag
-
-        cents[sign]=mid_cent[0]
-        cents.append(mid_cent[1])
-
-    return np.array(cents),tags
-
+        yp=np.apply_along_axis(self.one,axis=1,arr=testx)
+        
+        return yp
 
 if __name__ == '__main__':
     
-    k=5
-    x,y=make_blobs(300,2,centers=k)
+    train_x = np.array([[1, 0, 1],
+                        [0, 1, 0],
+                        [0, 0, 1],
+                        [0, 2, 1],
+                        [0, 0, 0]])
+    train_y = np.array([0, 1, 0, 1, 1])
+    test_x=np.array([[1,2,1]])
+    alpha=1
+    nb=NaiveBayes(alpha)
+    nb.fit(train_x,train_y)
 
-    plt.scatter(x[:,0],x[:,1],c=y)
-    cents,tags=split(x,k)
-    plt.scatter(cents[:,0],cents[:,1],marker='*',color='r',s=100)
-    plt.show()
-
+    print(nb.predict(test_x))
