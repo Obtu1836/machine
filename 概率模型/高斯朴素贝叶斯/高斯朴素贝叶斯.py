@@ -5,7 +5,7 @@ import scipy.stats as ss
 import warnings
 warnings.filterwarnings('ignore',category=RuntimeWarning)
 
-from sklearn.datasets import load_iris,load_wine
+from sklearn.datasets import load_iris,load_wine,load_breast_cancer
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
@@ -74,7 +74,7 @@ class GaussBayes:
 if __name__ == '__main__':
     
     # com=load_iris()
-    com=load_wine()
+    com=load_breast_cancer()
     x,y=com.data,com.target
 
     x_trian,x_test,y_train,y_test=train_test_split(x,y,

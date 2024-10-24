@@ -40,6 +40,8 @@ class NaiveBayes:
         feat=pd.Series(np.tile(feat,class_num),index=groups.index)
         
         model=(groups+alpha).div(feat*alpha+groups.sum(axis=1),axis=0)
+        ## 重新排序下 防止非自然排序 (以防万一)
+        model=model.reindex(level=1,index=col_name)
         self.model=np.log(model)
 
         
@@ -65,6 +67,9 @@ class NaiveBayes:
     最终 计算出每条样本在不同类别下的概率 选择概率最大的那个类别输出
     '''
     def predict(self, x):
+        '''
+        本步 也可以用np.apply_along_axis直接解决
+        '''
         n=x.shape[1]
         df=pd.DataFrame(x,columns=[('x'+str(i+1))for i in range(n)])
         res=df.apply(self.class_part,axis=1).values
@@ -78,11 +83,11 @@ if __name__ == '__main__':
                         [0, 0, 1],
                         [0, 2, 1],
                         [0, 0, 0]])
-    alpha = 0
+    alpha = 1
     train_y = np.array([0, 1, 0, 1, 1])
 
     nb=NaiveBayes(alpha)
     nb.fit(train_x,train_y)
 
-    test_x=np.array([[0,0,1]])
+    test_x=np.array([[1,2,1]])
     print(nb.predict(test_x))

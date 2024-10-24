@@ -1,66 +1,60 @@
 import numpy as np
 import pandas as pd
+import scipy.stats as ss
 
-class NaiveBayes:
+from sklearn.datasets import load_wine
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
-    def __init__(self,alpha=0):
+class Gauss_bayes:
 
-        self.alpha=alpha
-
-    @staticmethod
-    def cal_feature(df):
-
-        p=df.apply(lambda x:x.value_counts())
-        return p.T
-    
     def fit(self,x,y):
+        
         n=x.shape[1]
-        col_name=[('x'+str(i+1)) for i in range(n)]
-        k=len(np.unique(y))
-        y=pd.Series(y)
-        self.yps=(y.value_counts()+alpha)/(len(y)+k)
+        self.col_name=[('x'+str(i+1)) for i in range(n)]
+        self.yps=np.log(pd.Series(y).value_counts()/len(y))
 
-        df=pd.DataFrame(x,columns=col_name)
-        model=df.groupby(y).apply(self.cal_feature)
-        model.fillna(0,inplace=True)
-
-        ser=df.apply(lambda x:len(x.unique()))
-        ser=pd.Series(np.tile(ser,k),index=model.index)
-        prob=(model+self.alpha).div(model.sum(axis=1)+ser*self.alpha,axis=0)
-        self.prob=np.log(prob).groupby(level=0)
+        df=pd.DataFrame(x,columns=self.col_name)
+        mean_var=df.groupby(y).agg(['mean','var'])
+        mean_var=mean_var.swaplevel(axis=1)
+        mean_var.sort_index(level=0,inplace=True,axis=1)
+        self.mean_var_group=mean_var.groupby(level=0)
 
     def two(self,df,ser):
+        
+        id=df.name
+        mean=df['mean'].reindex(self.col_name,axis=1)
+        var=df['var'].reindex(self.col_name,axis=1)
+        prob=ss.norm(mean,np.sqrt(var)).pdf(ser)
 
-        ind=df.name
-        df=df.values
-        ps=df[range(len(df)),ser].sum()+self.yps[ind]
-
-        return ps
-
+        return np.log(prob).sum()+self.yps[id]
 
     def one(self,ser):
 
-        p=self.prob.apply(self.two,ser)
+        ps=self.mean_var_group.apply(self.two,ser)
         
-        return p.idxmax()
+        return ps.idxmax()
 
     def predict(self,testx):
 
-        yp=np.apply_along_axis(self.one,axis=1,arr=testx)
-        
-        return yp
+        res=np.apply_along_axis(self.one,axis=1,arr=testx)
+        return res
+
 
 if __name__ == '__main__':
     
-    train_x = np.array([[1, 0, 1],
-                        [0, 1, 0],
-                        [0, 0, 1],
-                        [0, 2, 1],
-                        [0, 0, 0]])
-    train_y = np.array([0, 1, 0, 1, 1])
-    test_x=np.array([[1,2,1]])
-    alpha=1
-    nb=NaiveBayes(alpha)
-    nb.fit(train_x,train_y)
+    com=load_wine()
+    x,y,=com.data,com.target
 
-    print(nb.predict(test_x))
+    x_train,x_test,y_train,y_test=train_test_split(x,y,
+                                                   train_size=0.7,
+                                                   shuffle=True,
+                                                   stratify=y)
+    
+    gb=Gauss_bayes()
+    gb.fit(x_train,y_train)
+
+    yp=gb.predict(x_test)
+
+    acc=accuracy_score(y_test,yp)
+    print(acc)
