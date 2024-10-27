@@ -66,15 +66,16 @@ class GMM:
         for i in range(self.k):
             norm=multivariate_normal(m[i],c[i]+self.alpha)
             r[:,i]=norm.pdf(self.data)
-        r=r*w  # 可以看成全概率（隐变量）
-        return r
+        z=r*w 
+        
+        return z
         
     def m_step(self,z):
         '''
         M步 根据传入的隐变量 估计出 每个高斯分布的 均值 协方差 和占比
         '''
-
         z=z/np.sum(z,axis=1,keepdims=1)
+
         r_t=z.sum(axis=0) # (1,k)
 
         ms=np.zeros((self.k,self.d)) # 更新均值
