@@ -29,14 +29,12 @@ class MultiCategorization:
         '''
 
         lab,num=np.unique(y_train,return_counts=1)
-        f=np.tile([num],len(y_train)).reshape(len(y_train),-1)
-        f=f/f.sum(axis=1,keepdims=1)
-
-        # f=np.zeros_like(mask)  # 先验概率初始化为0
+        # f=np.tile([num],len(y_train)).reshape(len(y_train),-1)
+        # f=f/f.sum(axis=1,keepdims=1)
 
         self.k = len(lab) #类别数目
         mask = np.eye(self.k)[y_train] # one-hot格式
-    
+        f=np.zeros_like(mask)  # 先验概率初始化为0
         n_trees = []
         flag = True
         for i in range(iter_num): #外循环 迭代次数

@@ -56,6 +56,7 @@ class NaiveBayes:
     def class_part(self,x):
         res=self.model.groupby(level=0).apply\
                             (self.dete_prob,x,self.y_prob)
+        print(res)
         return res
 
     '''
