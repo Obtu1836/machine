@@ -6,8 +6,6 @@ import matplotlib.animation as mpan
 
 def lrlw(tx, x, y, k):
 
-    # ke = tx-x
-    # dia = np.exp(-np.power(ke, 2)/(2*k**2))
     dis=norm(x[:,None]-tx,axis=2)
     dis=np.power(dis,2)
     dia=np.exp(-dis/(2*k**2))
@@ -20,11 +18,8 @@ def lrlw(tx, x, y, k):
 def paint(n):
 
     k = ks[n]
-    prey = []
 
-    for var in testx:
-        prey.append(lrlw(var, x, y, k))
-    yp = np.array(prey).ravel()
+    yp=np.apply_along_axis(lrlw,1,testx,x,y,k)
 
     p.set_data(testx.ravel(), yp)
     st.set_text(f'Gauss_ker={k}')

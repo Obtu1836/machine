@@ -53,15 +53,28 @@ def km(data,k=2):
 
 def two(data,k):
 
+    '''
+    在写决策树时  有一段类似的代码(下文注释部分) 通过迭代差值的 找出最小值
+
+    在本段代码中并不适用 因为初始的sse 并不知道大小 所以设为np.inf
+
+    如果通过差值判断  假设 d1=np.inf-20  d2=np.inf-30  
+    这种情况d1,d2无法比较 进而导致判断出错   
+
+    另一种解决方式 就是 计算初始sse =norm(data[:,None]-cents,axis=2)
+    只要保证 sse初始存在确切的值就可 
+    '''
+
     cents=[]
     cents.append(data[np.random.randint(len(data))])
 
     m,n=data.shape
     tags=np.zeros((m,2))
 
+
     while len(cents)<k:
         sse=np.inf
-
+        # diff=0
         for i in range(len(cents)):
             cur_data=data[tags[:,0]==i]
             split_cent,split_tag=km(cur_data)
@@ -77,6 +90,14 @@ def two(data,k):
                 sse=_sse
                 mid_cent=split_cent
                 mid_tag=split_tag
+
+            # ds=sse-_sse
+            # if ds>diff:
+            #     sign=i
+            #     diff=ds
+            #     mid_cent=split_cent
+            #     mid_tag=split_tag
+            
 
         mid_tag[mid_tag[:,0]==1,0]=len(cents)
         mid_tag[mid_tag[:,0]==0,0]=sign

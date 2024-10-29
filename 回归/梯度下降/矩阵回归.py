@@ -2,6 +2,7 @@ import numpy as np
 from collections import deque
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
 
 def loss(x,w,y):
 
@@ -40,7 +41,8 @@ if __name__ == '__main__':
 
     y_p=x_test.dot(w)
 
-    print(np.allclose(y_p.ravel(),y_test,atol=1e-2))
+    # print(np.allclose(y_p.ravel(),y_test,atol=1e-2))
+    print(r2_score(y_test,y_p))
 
 
 

@@ -22,7 +22,7 @@ def loss(x, w, y):# x(m,n) w(n,1) y(m,1）
 
 def grad(x, w, y):
 
-    return x.T.dot(sigmoid(x, w)-y)
+    return -x.T.dot(y-sigmoid(x, w))
 
 
 if __name__ == '__main__':
