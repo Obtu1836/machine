@@ -1,5 +1,5 @@
 import numpy as np
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris,load_digits
 from sklearn.model_selection import train_test_split
 
 def cal_info(p):
@@ -124,7 +124,8 @@ def printf(tree,level='root-'):
     
 if __name__ == '__main__':
     
-    com=load_iris()
+    # com=load_iris()
+    com=load_digits()
     data=com.data
     label=com.target
 
@@ -143,7 +144,7 @@ if __name__ == '__main__':
 
     print(f'准确率: {acc}')
 
-    printf(tree)
+    # printf(tree)
 
 
 

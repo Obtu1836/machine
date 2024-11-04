@@ -25,7 +25,8 @@ class LogisticRegression:
 
 if __name__ == '__main__':
     
-    com=load_iris()
+    # com=load_iris()
+    com=load_digits()
     data,label=com.data,com.target
 
     scale=MinMaxScaler()
