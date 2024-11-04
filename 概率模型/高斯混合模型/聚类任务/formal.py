@@ -105,7 +105,7 @@ class GMM:
         
         res=self.e_step(it_mean,it_cov,it_ws)
 
-        yp=np.log(res).argmax(axis=1)
+        yp=np.log(res).argmax(axis=1) # 直接选出拟合程度最高的高斯分布 
 
         return yp
         

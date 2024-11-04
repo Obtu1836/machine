@@ -2,9 +2,22 @@ import numpy as np
 np.set_printoptions(precision=4,suppress=True)
 from numpy.linalg import norm
 from scipy.stats import multivariate_normal
-from sklearn.datasets import load_iris
+from sklearn.datasets import load_iris,load_digits
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+
+'''
+用高斯混合模型进行分类任务 :
+     使用k个高斯分布拟合 (k是自定义的) 每一个类别的数据分布  假设有m个类别
+     最后得到m个分类器。在每个分类器 最终输出的是当前的分类器对当前的类别数据的
+     k个高斯分布的加权和 (rij*ws).sum(axis=1) 
+
+     （当一个新的测试样本分别送入到各个类别的分类器时  如果属于该类别 那么概率值
+     会是最大的）
+
+     汇总每个分类器的最终结果 选出最大的索引 
+
+'''
 
 import warnings
 warnings.filterwarnings('ignore',category=RuntimeWarning)
@@ -19,7 +32,7 @@ class GMM_class:
         self.alpha=np.eye(self.d)*alpha
 
     @staticmethod
-    def k_plus(data,k):
+    def k_plus(data,k): # 初始化均值 轮盘法选取距离相对分散的
         cents=[data[np.random.randint(len(data))]]
         while len(cents)<k:
             dis=np.min(norm(data[:,None]-cents,axis=2),axis=1)
@@ -34,31 +47,30 @@ class GMM_class:
                     break
         return np.array(cents)
 
-    def init(self):
+    def init(self):# 初始化 均值方差 权重
 
         mean=self.k_plus(self.data,self.k)
 
         cov=[np.eye(self.d)*np.random.rand() for i in range(self.k)]
         cov=np.array(cov)
 
-
         ws=np.random.rand(self.k)
         ws=ws/ws.sum()
 
         return mean,cov,ws
     
-    def e_step(self,mean,cov,ws):
+    def e_step(self,mean,cov,ws): # e步 根据mean,cov,ws 确定z
 
         rj=np.zeros((len(self.data),self.k))
         for i in range(self.k):
             ns=multivariate_normal(mean[i],cov[i]+self.alpha)
-            rj[:,i]=ns.pdf(self.data)
+            rj[:,i]=ns.pdf(self.data) #计算概率
         
-        rj=rj*ws
+        rj=rj*ws # 加权
         
         return rj
     
-    def m_step(self,z): #(m,k)
+    def m_step(self,z): #(m,k) m步 根据 因变量 更新 mean，cov,ws
         
         z=z/z.sum(axis=1)[:,None]
 
@@ -84,20 +96,21 @@ class GMM_class:
             newm,newc,neww=self.m_step(z)
             mean,cov,ws=newm,newc,neww
         
-        return mean,cov,ws
+        self.means,self.cov,self.ws=mean,cov,ws
     
-    def predict(self,means,cov,ws):
-        rj=np.zeros((len(self.data),self.k))
+    def predict(self,x):
+        rj=np.zeros((len(x),self.k))
         for i in range(self.k):
-            ns=multivariate_normal(means[i],cov[i]+self.alpha)
-            rj[:,i]=ns.pdf(self.data)
+            ns=multivariate_normal(self.means[i],self.cov[i]+self.alpha)
+            rj[:,i]=ns.pdf(x)
 
-        p=np.log(rj+1e-10)+np.log(ws)
-        return p
+        p=np.log(rj+1e-10)+np.log(self.ws) 
+        return p.sum(axis=1) #分类器中k个高斯分布的加权和
 
 if __name__ == '__main__':
     
-    com=load_iris()
+    # com=load_iris()
+    com=load_digits()
     
     x,y=com.data,com.target
     
@@ -111,20 +124,16 @@ if __name__ == '__main__':
     dits={}
     iter=500
     ks=1
-    for i in np.unique(y):
+    for i in np.unique(y): # 根据类别 选出数据 进行训练
         dat=train_x[np.where(train_y==i)[0]]
         gmm=GMM_class(ks,d,dat)
-        
-        m,c,w=gmm.fit(iter)
-        dits[i]={'mean':m,'cov':c,'ws':w}
+        gmm.fit(iter)
+        dits[i]=gmm
 
-    res=np.zeros((len(test_x),k))
+    res=np.zeros((len(test_x),k))# 将测试样本分别送到各个分类器
     for var in dits:
         model=dits[var]
-        gmt=GMM_class(ks,d,test_x)
-        ms,cs,ws=model['mean'],model['cov'],model['ws']
-        p=gmt.predict(ms,cs,ws)
-        res[:,var]=p.sum(axis=1)
+        res[:,var]=model.predict(test_x)
 
     yp=res.argmax(axis=1)
 
