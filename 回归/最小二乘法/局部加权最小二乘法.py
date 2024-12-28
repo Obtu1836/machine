@@ -37,10 +37,10 @@ if __name__ == '__main__':
     '''
 
     # 生成训练用的数据
-    trainx = np.linspace(-3, 3, 20)
-    def f(x): return 3*x**2-2*x+20
+    trainx = np.linspace(-3, 3, 50)
+    def f(x): return x**2+4*x+4
 
-    trainy = f(trainx)+np.random.randn(len(trainx))*5
+    trainy = f(trainx)+np.random.randn(len(trainx))*1
 
     x = trainx[:, None]
     y = trainy[:, None]
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     ks = [5, 2, 1, 0.5, 0.05]
 
     fig = plt.figure()
-    plt.ylim(trainy.min()-20, trainy.max()+20)
+    plt.ylim(trainy.min()-5, trainy.max()+5)
 
     p = plt.plot([], [], color='g')[0]
     st = plt.text(-2, 2, '')
